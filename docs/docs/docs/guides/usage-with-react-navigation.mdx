@@ -128,6 +128,15 @@ Color for the active tab.
 On iOS 26 (Liquid Glass), using this prop applies a workaround that bakes tab labels into images for correct tinting. This disables Dynamic Type (accessibility font sizes) and the Bold Text accessibility setting for tab labels.
 :::
 
+#### `tabBarIconPreservesOriginalColors` <Badge text="iOS" type="info" />
+
+Whether the tab icon should preserve its original colors instead of using `tabBarActiveTintColor`, `tabBarInactiveTintColor`, or the selected tab tint color.
+
+- Type: `boolean`
+- Default: `false`
+
+Use this option for individual multicolor icons, such as SVG assets, that should not be template-tinted by the tab bar.
+
 #### `tabBarInactiveTintColor`
 
 Color for the inactive tabs.

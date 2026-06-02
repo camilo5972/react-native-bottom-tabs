@@ -68,6 +68,11 @@ export type NativeBottomTabNavigationOptions = {
   tabBarIcon?: (props: { focused: boolean }) => ImageSourcePropType | AppleIcon;
 
   /**
+   * Whether the tab icon should preserve its original colors instead of using tint colors. Defaults to false. (iOS only)
+   */
+  tabBarIconPreservesOriginalColors?: boolean;
+
+  /**
    * Whether the tab bar item is visible. Defaults to true.
    */
   tabBarItemHidden?: boolean;
@@ -150,6 +155,7 @@ export type NativeBottomTabNavigationConfig = Partial<
     | 'renderScene'
     | 'getLazy'
     | 'getIcon'
+    | 'getIconPreservesOriginalColors'
     | 'getLabelText'
     | 'getBadge'
     | 'getBadgeBackgroundColor'

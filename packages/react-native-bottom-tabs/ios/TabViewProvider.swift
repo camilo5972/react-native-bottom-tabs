@@ -9,6 +9,7 @@ public final class TabInfo: NSObject {
   public let badge: String?
   public let sfSymbol: String
   public let activeTintColor: PlatformColor?
+  public let iconPreservesOriginalColors: Bool
   public let hidden: Bool
   public let testID: String?
   public let role: TabBarRole?
@@ -20,6 +21,7 @@ public final class TabInfo: NSObject {
     badge: String?,
     sfSymbol: String,
     activeTintColor: PlatformColor?,
+    iconPreservesOriginalColors: Bool = false,
     hidden: Bool,
     testID: String?,
     role: String?,
@@ -30,6 +32,7 @@ public final class TabInfo: NSObject {
     self.badge = badge
     self.sfSymbol = sfSymbol
     self.activeTintColor = activeTintColor
+    self.iconPreservesOriginalColors = iconPreservesOriginalColors
     self.hidden = hidden
     self.testID = testID
     self.role = TabBarRole(rawValue: role ?? "")
@@ -265,7 +268,7 @@ public final class TabInfo: NSObject {
               #if os(macOS)
               props.icons[index] = icon
               #else
-              props.icons[index] = icon?.withRenderingMode(.alwaysTemplate)
+              props.icons[index] = icon
               #endif
               props.iconsRevision += 1
             }

@@ -70,6 +70,9 @@ export default function NativeBottomTabView({
 
         return null;
       }}
+      getIconPreservesOriginalColors={({ route }) =>
+        descriptors[route.key]?.options.tabBarIconPreservesOriginalColors
+      }
       getLazy={({ route }) => descriptors[route.key]?.options.lazy ?? true}
       getFreezeOnBlur={({ route }) =>
         descriptors[route.key]?.options.freezeOnBlur

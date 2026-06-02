@@ -226,7 +226,12 @@ struct TabViewImpl: View {
       let tabActiveColor = tabData.activeTintColor ?? props.activeTintColor
       let assetIcon = props.icons[itemIndex]
       let icon = assetIcon ?? makeSFSymbolImage(named: tabData.sfSymbol)
-      let shouldRenderLabelIntoImage = props.hasCustomTintColors && props.labeled && tabData.role != .search && icon != nil
+      let shouldPreserveOriginalIconColors = tabData.iconPreservesOriginalColors
+      let shouldRenderLabelIntoImage = !shouldPreserveOriginalIconColors
+        && props.hasCustomTintColors
+        && props.labeled
+        && tabData.role != .search
+        && icon != nil
 
       item.accessibilityLabel = tabData.title
 
@@ -252,12 +257,19 @@ struct TabViewImpl: View {
       item.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 0)
 
       if let icon {
-        item.image = props.inactiveTintColor.map {
-          icon.withTintColor($0, renderingMode: .alwaysOriginal)
-        } ?? icon
-        item.selectedImage = tabActiveColor.map {
-          icon.withTintColor($0, renderingMode: .alwaysOriginal)
-        } ?? icon
+        if shouldPreserveOriginalIconColors {
+          let originalIcon = icon.withRenderingMode(.alwaysOriginal)
+          item.image = originalIcon
+          item.selectedImage = originalIcon
+        } else {
+          let templateIcon = icon.withRenderingMode(.alwaysTemplate)
+          item.image = props.inactiveTintColor.map {
+            templateIcon.withTintColor($0, renderingMode: .alwaysOriginal)
+          } ?? templateIcon
+          item.selectedImage = tabActiveColor.map {
+            templateIcon.withTintColor($0, renderingMode: .alwaysOriginal)
+          } ?? templateIcon
+        }
       }
 
       item.setTitleTextAttributes(

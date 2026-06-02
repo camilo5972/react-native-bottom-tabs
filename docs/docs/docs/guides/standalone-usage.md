@@ -224,6 +224,7 @@ Each route in the `routes` array can have the following properties:
 - `title`: Display title for the tab
 - `focusedIcon`: Icon to show when tab is active
 - `unfocusedIcon`: Icon to show when tab is inactive (optional)
+- `iconPreservesOriginalColors`: Whether the icon should preserve its original colors instead of using tint colors (iOS only, optional, defaults to `false`)
 - `badge`: Badge text to display on the tab
 - `activeTintColor`: Custom active tint color for this specific tab
 - `lazy`: Whether to lazy load this tab's content
@@ -267,6 +268,14 @@ Function to get the active tint color for a tab.
 Function to get the icon for a tab.
 
 - Default: Uses `route.focusedIcon` and `route.unfocusedIcon`
+
+#### `getIconPreservesOriginalColors`
+
+Function to determine whether the icon should preserve its original colors instead of using tint colors.
+
+- Default: Uses `route.iconPreservesOriginalColors`
+- Default value: `false`
+- Platform: iOS
 
 #### `getHidden`
 

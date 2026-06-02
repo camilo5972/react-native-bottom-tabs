@@ -138,6 +138,13 @@ interface Props<Route extends BaseRoute> {
   }) => ImageSource | AppleIcon | undefined | null;
 
   /**
+   * Determines whether the icon should preserve its original colors instead of using tint colors. Uses `route.iconPreservesOriginalColors` by default. (iOS only)
+   */
+  getIconPreservesOriginalColors?: (props: {
+    route: Route;
+  }) => boolean | undefined;
+
+  /**
    * Get hidden for the tab, uses `route.hidden` by default.
    * If `true`, the tab will be hidden.
    */
@@ -236,6 +243,8 @@ const TabView = <Route extends BaseRoute>({
         ? route.focusedIcon
         : route.unfocusedIcon
       : route.focusedIcon,
+  getIconPreservesOriginalColors = ({ route }: { route: Route }) =>
+    route.iconPreservesOriginalColors,
   getHidden = ({ route }: { route: Route }) => route.hidden,
   getActiveTintColor = ({ route }: { route: Route }) => route.activeTintColor,
   getTestID = ({ route }: { route: Route }) => route.testID,
@@ -317,6 +326,8 @@ const TabView = <Route extends BaseRoute>({
           ),
           badgeTextColor: processColor(getBadgeTextColor?.({ route })),
           activeTintColor: processColor(getActiveTintColor({ route })),
+          iconPreservesOriginalColors:
+            getIconPreservesOriginalColors?.({ route }) ?? false,
           hidden: getHidden?.({ route }),
           testID: getTestID?.({ route }),
           role: getRole?.({ route }),
@@ -331,6 +342,7 @@ const TabView = <Route extends BaseRoute>({
       getBadgeBackgroundColor,
       getBadgeTextColor,
       getActiveTintColor,
+      getIconPreservesOriginalColors,
       getHidden,
       getTestID,
       getRole,
