@@ -259,8 +259,17 @@ struct TabViewImpl: View {
       if let icon {
         if shouldPreserveOriginalIconColors {
           let originalIcon = icon.withRenderingMode(.alwaysOriginal)
-          item.image = originalIcon
+          // Active state always shows the original multicolor artwork.
           item.selectedImage = originalIcon
+          // Inactive state: on iOS 26 Liquid Glass the system renders the
+          // UITabBarItem image directly (ignoring the SwiftUI Tab label:
+          // closure), so we must bake the inactiveTintColor into item.image
+          // here. On iOS 18 SwiftUI TabView the SwiftUI label: path handles
+          // this via TabItem.swift, but setting item.image here is harmless.
+          item.image = props.inactiveTintColor.map {
+            icon.withRenderingMode(.alwaysTemplate)
+              .withTintColor($0, renderingMode: .alwaysOriginal)
+          } ?? originalIcon
         } else {
           let templateIcon = icon.withRenderingMode(.alwaysTemplate)
           item.image = props.inactiveTintColor.map {

@@ -2,12 +2,20 @@ import SwiftUI
 
 #if !os(macOS)
 private extension UIImage {
+  /// Returns a flat, single-color silhouette of the receiver tinted with
+  /// `color`. We use `withTintColor(_:renderingMode:)` (iOS 13+) instead of
+  /// drawing the template manually because the latter occasionally fails to
+  /// pick up the fill color when the source UIImage carries multicolor
+  /// content (e.g. an icon configured with `iconPreservesOriginalColors`).
   func tinted(with color: UIColor) -> UIImage {
+    let template = withRenderingMode(.alwaysTemplate)
+    if #available(iOS 13.0, tvOS 13.0, *) {
+      return template.withTintColor(color, renderingMode: .alwaysOriginal)
+    }
     let renderer = UIGraphicsImageRenderer(size: size)
     return renderer.image { _ in
       color.set()
-      withRenderingMode(.alwaysTemplate)
-        .draw(in: CGRect(origin: .zero, size: size))
+      template.draw(in: CGRect(origin: .zero, size: size))
     }.withRenderingMode(.alwaysOriginal)
   }
 }
