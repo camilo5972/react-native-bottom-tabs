@@ -8,7 +8,9 @@
 
 #import <React/RCTFabricComponentsPlugins.h>
 
-#if __has_include("react_native_bottom_tabs/react_native_bottom_tabs-Swift.h")
+#if SWIFT_PACKAGE
+#import "BottomTabsBridge.h"
+#elif __has_include("react_native_bottom_tabs/react_native_bottom_tabs-Swift.h")
 #import "react_native_bottom_tabs/react_native_bottom_tabs-Swift.h"
 #else
 #import "react_native_bottom_tabs-Swift.h"
@@ -17,8 +19,18 @@
 #import <React/RCTImageLoader.h>
 #import <React/RCTImageSource.h>
 #import <React/RCTBridge+Private.h>
+#if SWIFT_PACKAGE
+#import <react/renderer/imagemanager/RCTImagePrimitivesConversions.h>
+#elif __has_include(<React/RCTImagePrimitivesConversions.h>)
+#import <React/RCTImagePrimitivesConversions.h>
+#else
 #import "RCTImagePrimitivesConversions.h"
+#endif
+#if __has_include(<React/RCTConversions.h>)
+#import <React/RCTConversions.h>
+#else
 #import "RCTConversions.h"
+#endif
 #import <react/utils/ManagedObjectWrapper.h>
 
 #if TARGET_OS_OSX
@@ -35,8 +47,10 @@ bool operator==(const RNCTabViewItemsStruct& lhs, const RNCTabViewItemsStruct& r
   return lhs.key == rhs.key &&
   lhs.title == rhs.title &&
   lhs.sfSymbol == rhs.sfSymbol &&
+  lhs.focusedSfSymbol == rhs.focusedSfSymbol &&
   lhs.badge == rhs.badge &&
   lhs.activeTintColor == rhs.activeTintColor &&
+  lhs.iconRenderingMode == rhs.iconRenderingMode &&
   lhs.iconPreservesOriginalColors == rhs.iconPreservesOriginalColors &&
   lhs.hidden == rhs.hidden &&
   lhs.testID == rhs.testID &&
@@ -53,7 +67,14 @@ bool operator!=(const RNCTabViewItemsStruct& lhs, const RNCTabViewItemsStruct& r
 
 using namespace facebook::react;
 
-@interface RCTTabViewComponentView () <RCTRNCTabViewViewProtocol, TabViewProviderDelegate> {
+#if SWIFT_PACKAGE
+typedef UIView<RNCTabViewProvider> TabViewProvider;
+typedef NSObject TabInfo;
+@interface RCTTabViewComponentView () <RCTRNCTabViewViewProtocol, RNCTabViewProviderDelegate>
+#else
+@interface RCTTabViewComponentView () <RCTRNCTabViewViewProtocol, TabViewProviderDelegate>
+#endif
+{
 }
 
 @end
@@ -71,7 +92,11 @@ using namespace facebook::react;
 {
   if (self = [super initWithFrame:frame]) {
     static const auto defaultProps = std::make_shared<const RNCTabViewProps>();
+#if SWIFT_PACKAGE
+    _tabViewProvider = RNCCreateTabViewProvider(self);
+#else
     _tabViewProvider = [[TabViewProvider alloc] initWithDelegate:self];
+#endif
     self.contentView = _tabViewProvider;
     _props = defaultProps;
   }
@@ -117,6 +142,16 @@ using namespace facebook::react;
     _tabViewProvider.icons = iconsArray;
   }
 
+  if (oldViewProps.focusedIcons != newViewProps.focusedIcons) {
+    auto focusedIconsArray = [[NSMutableArray alloc] init];
+    for (auto &source: newViewProps.focusedIcons) {
+      auto imageSource = [[RCTImageSource alloc] initWithURLRequest:NSURLRequestFromImageSource(source) size:CGSizeMake(source.size.width, source.size.height) scale:source.scale];
+      [focusedIconsArray addObject:imageSource];
+    }
+
+    _tabViewProvider.focusedIcons = focusedIconsArray;
+  }
+
   if (oldViewProps.sidebarAdaptable != newViewProps.sidebarAdaptable) {
     _tabViewProvider.sidebarAdaptable = newViewProps.sidebarAdaptable;
   }
@@ -157,6 +192,10 @@ using namespace facebook::react;
     _tabViewProvider.inactiveTintColor = RCTUIColorFromSharedColor(newViewProps.inactiveTintColor);
   }
 
+  if (oldViewProps.experimentalBakedTintColors != newViewProps.experimentalBakedTintColors) {
+    _tabViewProvider.experimentalBakedTintColors = newViewProps.experimentalBakedTintColors;
+  }
+
   if (oldViewProps.hapticFeedbackEnabled != newViewProps.hapticFeedbackEnabled) {
     _tabViewProvider.hapticFeedbackEnabled = newViewProps.hapticFeedbackEnabled;
   }
@@ -189,12 +228,18 @@ NSArray* convertItemsToArray(const std::vector<RNCTabViewItemsStruct>& items) {
   NSMutableArray<TabInfo *> *result = [NSMutableArray array];
 
   for (const auto& item : items) {
+#if SWIFT_PACKAGE
+    auto tabInfo = [RNCTabInfo createWithKey:RCTNSStringFromString(item.key)
+#else
     auto tabInfo = [[TabInfo alloc] initWithKey:RCTNSStringFromString(item.key)
+#endif
                                           title:RCTNSStringFromString(item.title)
                                           badge:RCTNSStringFromStringNilIfEmpty(item.badge)
                                        sfSymbol:RCTNSStringFromStringNilIfEmpty(item.sfSymbol)
+                                 focusedSfSymbol:RCTNSStringFromStringNilIfEmpty(item.focusedSfSymbol)
                                 activeTintColor:RCTUIColorFromSharedColor(item.activeTintColor)
-                                      iconPreservesOriginalColors:item.iconPreservesOriginalColors
+                             iconRenderingMode:RCTNSStringFromStringNilIfEmpty(item.iconRenderingMode)
+                   iconPreservesOriginalColors:item.iconPreservesOriginalColors
                                          hidden:item.hidden
                                          testID:RCTNSStringFromStringNilIfEmpty(item.testID)
                                          role:RCTNSStringFromStringNilIfEmpty(item.role)
@@ -263,5 +308,3 @@ Class<RCTComponentViewProtocol> RNCTabViewCls(void)
 }
 
 #endif // RCT_NEW_ARCH_ENABLED
-
-

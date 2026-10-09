@@ -28,7 +28,11 @@ struct NewTabView: AnyTabView {
           let isFocused = props.selectedPage == tabData.key
 
           if !tabData.hidden || isFocused {
-            let icon = props.icons[index]
+            #if os(macOS)
+              let labelImage: PlatformImage? = nil
+            #else
+              let labelImage = props.itemImages.images(for: tabData, props: props)?.labelImage
+            #endif
 
             let context = TabAppearContext(
               index: index,
@@ -38,7 +42,7 @@ struct NewTabView: AnyTabView {
               onSelect: onSelect
             )
 
-            Tab(value: tabData.key, role: tabData.role?.convert()) {
+            Tab(value: tabData.key, role: tabData.role.flatMap { $0.convert() }) {
               RepresentableView(view: child.view)
                 .ignoresSafeArea(.container, edges: .all)
                 .tabAppear(using: context)
@@ -46,12 +50,11 @@ struct NewTabView: AnyTabView {
             } label: {
               TabItem(
                 title: tabData.title,
-                icon: icon,
+                icon: labelImage ?? props.icons[index],
                 sfSymbol: tabData.sfSymbol,
                 labeled: props.labeled,
-                preservesOriginalIconColors: tabData.iconPreservesOriginalColors,
-                isFocused: isFocused,
-                inactiveTintColor: props.inactiveTintColor
+                // Rendered label images already have their final rendering mode.
+                iconRenderingMode: labelImage == nil ? tabData.iconRenderingMode : nil
               )
             }
             #if !os(tvOS)
@@ -81,7 +84,7 @@ struct ConditionalBottomAccessoryModifier: ViewModifier {
   }
 
   func body(content: Content) -> some View {
-    #if os(macOS) || os(tvOS)
+    #if os(macOS) || os(tvOS) || !compiler(>=6.2)
     // tabViewBottomAccessory is not available on macOS
     content
     #else
@@ -98,7 +101,7 @@ struct ConditionalBottomAccessoryModifier: ViewModifier {
 
   @ViewBuilder
   private func renderBottomAccessoryView() -> some View {
-    #if !os(macOS) && !os(tvOS)
+    #if !os(macOS) && !os(tvOS) && compiler(>=6.2)
     if let bottomAccessoryView {
       if #available(iOS 26.0, *) {
         BottomAccessoryRepresentableView(view: bottomAccessoryView)
@@ -108,7 +111,7 @@ struct ConditionalBottomAccessoryModifier: ViewModifier {
   }
 }
 
-#if !os(macOS) && !os(tvOS)
+#if !os(macOS) && !os(tvOS) && compiler(>=6.2)
 @available(iOS 26.0, tvOS 26.0, *)
 struct BottomAccessoryRepresentableView: PlatformViewRepresentable {
   @Environment(\.tabViewBottomAccessoryPlacement) var tabViewBottomAccessoryPlacement

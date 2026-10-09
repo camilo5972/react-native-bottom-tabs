@@ -1,5 +1,23 @@
 # @bottom-tabs/react-navigation
 
+## 1.4.0
+
+### Minor Changes
+
+- [#542](https://github.com/callstack/react-native-bottom-tabs/pull/542) [`758746c`](https://github.com/callstack/react-native-bottom-tabs/commit/758746c8140c4fac3edf2b7cdd2adcf07f1099db) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Add an icon rendering mode option for preserving original colors of tab icons.
+
+### Patch Changes
+
+- [#553](https://github.com/callstack/react-native-bottom-tabs/pull/553) [`05acfaf`](https://github.com/callstack/react-native-bottom-tabs/commit/05acfaf90ced17e40e31220b731b9af47143237c) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Expose Android tab button test IDs to UIAutomator-based E2E tools.
+
+## 1.3.1
+
+### Patch Changes
+
+- [#538](https://github.com/callstack/react-native-bottom-tabs/pull/538) [`f7c2f7d`](https://github.com/callstack/react-native-bottom-tabs/commit/f7c2f7d9fadc3c5654675bad69d25733cc285782) Thanks [@rayabelcode](https://github.com/rayabelcode)! - Fix deprecated object argument on CommonActions.navigate
+
+## 1.3.0
+
 ## 1.2.0
 
 ### Minor Changes

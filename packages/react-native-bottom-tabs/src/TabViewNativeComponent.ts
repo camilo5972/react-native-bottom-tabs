@@ -26,10 +26,12 @@ export type TabViewItems = ReadonlyArray<{
   key: string;
   title: string;
   sfSymbol?: string;
+  focusedSfSymbol?: string;
   badge?: string;
   badgeBackgroundColor?: ProcessedColorValue | null;
   badgeTextColor?: ProcessedColorValue | null;
   activeTintColor?: ProcessedColorValue | null;
+  iconRenderingMode?: string;
   iconPreservesOriginalColors?: boolean;
   hidden?: boolean;
   testID?: string;
@@ -45,6 +47,7 @@ export interface TabViewProps extends ViewProps {
   onTabBarMeasured?: DirectEventHandler<OnTabBarMeasured>;
   onNativeLayout?: DirectEventHandler<OnNativeLayout>;
   icons?: ReadonlyArray<ImageSource>;
+  focusedIcons?: ReadonlyArray<ImageSource>;
   tabBarHidden?: boolean;
   labeled?: boolean;
   sidebarAdaptable?: boolean;
@@ -54,6 +57,7 @@ export interface TabViewProps extends ViewProps {
   rippleColor?: ColorValue;
   activeTintColor?: ColorValue;
   inactiveTintColor?: ColorValue;
+  experimentalBakedTintColors?: WithDefault<boolean, false>;
   disablePageAnimations?: boolean;
   activeIndicatorColor?: ColorValue;
   hapticFeedbackEnabled?: boolean;

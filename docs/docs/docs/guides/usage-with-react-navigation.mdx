@@ -124,25 +124,26 @@ It's recommended to use `transparent` or `opaque` without lazy loading as the ta
 
 Color for the active tab.
 
-:::warning
-On iOS 26 (Liquid Glass), using this prop applies a workaround that bakes tab labels into images for correct tinting. This disables Dynamic Type (accessibility font sizes) and the Bold Text accessibility setting for tab labels.
-:::
-
-#### `tabBarIconPreservesOriginalColors` <Badge text="iOS" type="info" />
-
-Whether the tab icon should preserve its original colors instead of using `tabBarActiveTintColor`, `tabBarInactiveTintColor`, or the selected tab tint color.
-
-- Type: `boolean`
-- Default: `false`
-
-Use this option for individual multicolor icons, such as SVG assets, that should not be template-tinted by the tab bar.
-
 #### `tabBarInactiveTintColor`
 
 Color for the inactive tabs.
 
+:::note
+On iOS >= 26 (Liquid Glass), this prop is ignored by default. Icons using `tabBarIconPreservesOriginalColors` still apply the inactive tint color; their labels retain native text rendering.
+:::
+
+#### `experimental_bakedTintColors` <Badge text="iOS" type="info" /> <Badge text="experimental" type="danger"/>
+
+Enable an experimental mode which bakes (rasterizes) the label into the icon image, allowing for better control of the tint colors on iOS 26+.
+
+- Type: `boolean`
+
 :::warning
-On iOS 26 (Liquid Glass), using this prop applies a workaround that bakes tab labels into images for correct tinting. This disables Dynamic Type (accessibility font sizes) and the Bold Text accessibility setting for tab labels.
+This feature is experimental, and might be removed in the future.
+
+It has many drawbacks, such as SFSymbol icon sizes being different on label width, badges being positioned far away from the icon depending on the label width, and possibly breaking accessibility since the label will be baked inside the icon image.
+
+Use with caution, only if you prioritize tint color consistency between platforms.
 :::
 
 #### `tabBarStyle`
@@ -184,6 +185,7 @@ Controls how the tab bar behaves when content is scrolled.
 - Default: `undefined` (uses system default)
 
 Options:
+
 - `automatic`: Platform determines the behavior
 - `onScrollDown`: Tab bar minimizes when scrolling down
 - `onScrollUp`: Tab bar minimizes when scrolling up
@@ -224,15 +226,14 @@ function MyTabBar({ state, descriptors, navigation }) {
 
 function MyTabs() {
   return (
-    <Tab.Navigator
-      tabBar={(props) => <MyTabBar {...props} />}
-    >
+    <Tab.Navigator tabBar={(props) => <MyTabBar {...props} />}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
 ```
+
 #### `renderBottomAccessoryView` <Badge text="iOS" type="info" /> <Badge text="experimental" type="danger"/>
 
 Function that returns a React element to render as [bottom accessory](https://developer.apple.com/documentation/uikit/uitabbarcontroller/bottomaccessory).
@@ -257,12 +258,8 @@ Label text of the tab displayed in the navigation bar. When undefined, scene tit
 
 Color for the active tab.
 
-:::warning
-On iOS 26 (Liquid Glass), using this prop applies a workaround that bakes tab labels into images for correct tinting. This disables Dynamic Type (accessibility font sizes) and the Bold Text accessibility setting for tab labels.
-:::
-
 :::note
-The `tabBarInactiveTintColor` is not supported on route level due to native limitations. Use `inactiveTintColor` in the `Tab.Navigator` instead.
+The `tabBarInactiveTintColor` is not supported on route level due to native limitations. Use `tabBarInactiveTintColor` in the `Tab.Navigator` instead.
 :::
 
 #### `tabBarIcon`
@@ -289,9 +286,38 @@ Function that given `{ focused: boolean }` returns `ImageSource` or `AppleIcon` 
 SF Symbols are only supported on Apple platforms.
 :::
 
+#### `tabBarIconPreservesOriginalColors` <Badge text="iOS" type="info" />
+
+Preserve the focused icon's original colors and apply `tabBarInactiveTintColor` to the inactive icon. When no inactive tint is provided, the inactive icon uses the native template tint.
+
+- Type: `boolean`
+- Default: `false`
+
+This option takes precedence over `tabBarIconRenderingMode` and keeps labels as native text, including when `experimental_bakedTintColors` is enabled. Use `tabBarIconRenderingMode: 'original'` to preserve colors in both states instead.
+
+#### `tabBarIconRenderingMode`
+
+Rendering mode for image icons.
+
+- Type: `'automatic' | 'original'`
+- Default: `'automatic'`
+
+Use `original` to preserve the original colors of multicolor image icons, such as logos or branded assets, instead of applying the native tab tint.
+
+```tsx
+<Tab.Screen
+  name="Brand"
+  component={Brand}
+  options={{
+    tabBarIcon: () => require('brand-logo.png'),
+    tabBarIconRenderingMode: 'original',
+  }}
+/>
+```
+
 :::warning
 
-Metro transformers that modify the import resolutions of images to something that is *not* React Native's `ImageSource` will break this. A notable community example of such is [react-native-svg-transformer](https://github.com/kristerkari/react-native-svg-transformer).
+Metro transformers that modify the import resolutions of images to something that is _not_ React Native's `ImageSource` will break this. A notable community example of such is [react-native-svg-transformer](https://github.com/kristerkari/react-native-svg-transformer).
 
 For best results, avoid the use of such transformers altogether.
 
@@ -315,12 +341,12 @@ config.resolver.sourceExts = [...config.resolver.sourceExts, "svg"];
 ```
 
 Then change your require calls like so:
+
 ```
 tabBarIcon: () => require('person.svgx')
 ```
 
 :::
-
 
 #### `tabBarBadge`
 
@@ -332,14 +358,14 @@ To display a badge without text (just a dot), you need to pass a string with a s
 
 #### `tabBarBadgeBackgroundColor`
 
- - Type: `string`
- 
+- Type: `string`
+
 Set the background color for the badge on android.
 Uses the system color by default.
 
 #### `tabBarBadgeTextColor`
 
- - Type: `string`
+- Type: `string`
 
 Set the text color for the badge on android.
 Uses the system color by default.
@@ -359,6 +385,7 @@ Due to native limitations on iOS, this option doesn't hide the tab item **when h
 Whether this screens should render the first time it's accessed. Defaults to true. Set it to false if you want to render the screen on initial render.
 
 #### `freezeOnBlur`
+
 Boolean indicating whether to prevent inactive screens from re-rendering. Defaults to false.
 
 It's working separately from `enableFreeze()` in `react-native-screens`. So settings won't be shared between them.
@@ -374,18 +401,18 @@ Whether to prevent default tab switching behavior when this tab is pressed. This
 Due to iOS 26's new tab switching animations, controlling tab switching from JavaScript can cause significant delays. The `preventsDefault` option allows you to define this behavior statically to avoid animation delays.
 :::
 
-
 #### `tabBarButtonTestID`
 
 Test ID for the tab item. This can be used to find the tab item in the native view hierarchy.
 
 #### `role` <Badge text="iOS 18+" type="info" />
 
-A value that defines the purpose of the tab. This can be used to pin and separate search tabs
+A value that defines the purpose of the tab.
 
 Available options:
 
-- `search` - The search role.
+- `search` - Marks the tab as the search tab, which the system can pin to the trailing end of the tab bar. On iOS 27+, it may also receive the prominent treatment when no tab has the `prominent` role.
+- `prominent` <Badge text="iOS 27+" type="info" /> - Gives the tab more visual emphasis than the others. Only one tab can be prominent. Requires building with the iOS 27 SDK, and on earlier iOS versions the tab is displayed as a regular tab.
 
 #### `sceneStyle`
 
@@ -416,7 +443,6 @@ React.useEffect(() => {
   const unsubscribe = navigation.addListener('tabPress', (e) => {
     // Note: For iOS 26+, use the `preventsDefault` option instead of `e.preventDefault()`
     // to avoid animation delays
-    
     // Do something manually
     // ...
   });

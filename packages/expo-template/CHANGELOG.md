@@ -1,5 +1,31 @@
 # @bottom-tabs/expo-template
 
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies [[`05acfaf`](https://github.com/callstack/react-native-bottom-tabs/commit/05acfaf90ced17e40e31220b731b9af47143237c), [`758746c`](https://github.com/callstack/react-native-bottom-tabs/commit/758746c8140c4fac3edf2b7cdd2adcf07f1099db), [`a8d871a`](https://github.com/callstack/react-native-bottom-tabs/commit/a8d871a8fd7e10fc54b02912e5f2dbca452a5d80), [`671c97f`](https://github.com/callstack/react-native-bottom-tabs/commit/671c97f5715aa0ca453a39e19428ba0096d82dbf)]:
+  - react-native-bottom-tabs@1.4.0
+  - @bottom-tabs/react-navigation@1.4.0
+
+## 1.1.2
+
+### Patch Changes
+
+- [#540](https://github.com/callstack/react-native-bottom-tabs/pull/540) [`d1b51c5`](https://github.com/callstack/react-native-bottom-tabs/commit/d1b51c5d0d2ca5d05fb9cc2af6fa79ca65c268d2) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Fix Expo template installs by aligning Expo SDK 54 dependency versions.
+
+- Updated dependencies [[`f7c2f7d`](https://github.com/callstack/react-native-bottom-tabs/commit/f7c2f7d9fadc3c5654675bad69d25733cc285782)]:
+  - @bottom-tabs/react-navigation@1.3.1
+  - react-native-bottom-tabs@1.3.1
+
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`942e441`](https://github.com/callstack/react-native-bottom-tabs/commit/942e4419e4667ab7ed58bcf5313d8ec291f7c659), [`6797d32`](https://github.com/callstack/react-native-bottom-tabs/commit/6797d321ad66f45bee3c6e64720ae983166661ef), [`2a8a9a0`](https://github.com/callstack/react-native-bottom-tabs/commit/2a8a9a0898f78a45834375652b1d765b96193160), [`5428315`](https://github.com/callstack/react-native-bottom-tabs/commit/54283150c216ccd31566d3f07d48f70f5faac44a), [`1c5b385`](https://github.com/callstack/react-native-bottom-tabs/commit/1c5b38565c464e612c3be715bded1f8950efc5d4), [`2ebe13b`](https://github.com/callstack/react-native-bottom-tabs/commit/2ebe13bef3a19b3c4168c741275ff00d96604cd7), [`412e9ca`](https://github.com/callstack/react-native-bottom-tabs/commit/412e9ca37e029edb6e0b808e1a9a576e7bf7d02e)]:
+  - react-native-bottom-tabs@1.3.0
+  - @bottom-tabs/react-navigation@1.3.0
+
 ## 1.1.0
 
 ### Minor Changes

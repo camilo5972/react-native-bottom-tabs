@@ -1,0 +1,331 @@
+import { Badge } from '@theme';
+
+# Standalone usage
+
+If you don't use React Navigation, you can use the `TabView` component directly.
+
+## Basic Example
+
+```tsx
+import * as React from 'react';
+import { View, Text } from 'react-native';
+import TabView, { SceneMap } from 'react-native-bottom-tabs';
+
+const HomeScreen = () => (
+  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <Text>Home Screen</Text>
+  </View>
+);
+
+const SettingsScreen = () => (
+  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <Text>Settings Screen</Text>
+  </View>
+);
+
+const renderScene = SceneMap({
+  home: HomeScreen,
+  settings: SettingsScreen,
+});
+
+export default function TabViewExample() {
+  const [index, setIndex] = React.useState(0);
+  const [routes] = React.useState([
+    {
+      key: 'home',
+      title: 'Home',
+      focusedIcon: { sfSymbol: 'house' },
+    },
+    {
+      key: 'settings',
+      title: 'Settings',
+      focusedIcon: { sfSymbol: 'gear' },
+    },
+  ]);
+
+  return (
+    <TabView
+      navigationState={{ index, routes }}
+      renderScene={renderScene}
+      onIndexChange={setIndex}
+      labeled
+      minimizeBehavior="onScrollDown" // iOS 26+: Hide tab bar when scrolling down
+    />
+  );
+}
+```
+
+## Scene Components
+
+Each scene in the tab view is a separate component that represents a screen. You can define these components independently:
+
+```tsx
+// HomeScreen.tsx
+export const HomeScreen = () => (
+  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <Text>Home Screen</Text>
+  </View>
+);
+
+// SettingsScreen.tsx
+export const SettingsScreen = () => (
+  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <Text>Settings Screen</Text>
+  </View>
+);
+```
+
+Then use `SceneMap` to map route keys to scene components:
+
+```tsx
+import { SceneMap } from 'react-native-bottom-tabs';
+
+const renderScene = SceneMap({
+  home: HomeScreen,
+  settings: SettingsScreen,
+});
+```
+
+## Props
+
+### Required Props
+
+#### `navigationState`
+
+State for the tab view. The state should contain:
+
+- `routes`: Array of route objects containing `key` and `title` props
+- `index`: Current selected tab index
+
+#### `renderScene`
+
+Function that returns a React element to render for the screen. Can be created using `SceneMap` or custom render function.
+
+#### `onIndexChange`
+
+Callback that is called when the tab index changes.
+
+### Optional Props
+
+#### `labeled`
+
+Whether to show labels in tabs. When `false`, only icons will be displayed.
+
+- Type: `boolean`
+- Default <Badge text="iOS" type="info" />: `true`
+- Default <Badge text="Android" type="info" />: `false`
+
+#### `sidebarAdaptable` <Badge text="iOS" type="info" />
+
+A tab bar style that adapts to each platform:
+
+- iPadOS: Top tab bar that can adapt into a sidebar
+- iOS: Bottom tab bar
+- macOS/tvOS: Sidebar
+- visionOS: Ornament with sidebar for secondary tabs
+
+#### `disablePageAnimations` <Badge text="iOS" type="info" />
+
+Whether to disable animations between tabs.
+
+- Type: `boolean`
+
+#### `hapticFeedbackEnabled`
+
+Whether to enable haptic feedback on tab press.
+
+- Type: `boolean`
+- Default: `false`
+
+#### `tabLabelStyle`
+
+Object containing styles for the tab label.
+Supported properties:
+
+- `fontFamily`
+- `fontSize`
+- `fontWeight`
+
+#### `scrollEdgeAppearance` <Badge text="iOS" type="info" />
+
+Appearance attributes for the tab bar when a scroll view is at the bottom.
+
+- Type: `'default' | 'opaque' | 'transparent'`
+
+#### `minimizeBehavior` <Badge text="iOS 26+" type="info" />
+
+Controls how the tab bar behaves when content is scrolled.
+
+- Type: `'automatic' | 'onScrollDown' | 'onScrollUp' | 'never'`
+- Default: `undefined` (uses system default)
+
+Options:
+
+- `automatic`: Platform determines the behavior
+- `onScrollDown`: Tab bar minimizes when scrolling down
+- `onScrollUp`: Tab bar minimizes when scrolling up
+- `never`: Tab bar never minimizes
+
+:::note
+This feature requires iOS 26.0 or later and is only available on iOS. On older versions, this prop is ignored.
+:::
+
+#### `tabBarActiveTintColor`
+
+Color for the active tab.
+
+- Type: `ColorValue`
+
+#### `tabBarInactiveTintColor`
+
+Color for inactive tabs.
+
+- Type: `ColorValue`
+
+:::note
+On iOS >= 26 (Liquid Glass), this prop is ignored by default. Icons using `iconPreservesOriginalColors` still apply the inactive tint color; their labels retain native text rendering.
+:::
+
+#### `experimental_bakedTintColors` <Badge text="iOS" type="info" /> <Badge text="experimental" type="danger"/>
+
+Enable an experimental mode which bakes (rasterizes) the label into the icon image, allowing for better control of the tint colors on iOS 26+.
+
+- Type: `boolean`
+
+:::warning
+This feature is experimental, and might be removed in the future.
+
+It has many drawbacks, such as SFSymbol icon sizes being different on label width, badges being positioned far away from the icon depending on the label width, and possibly breaking accessibility since the label will be baked inside the icon image.
+
+Use with caution, only if you prioritize tint color consistency between platforms.
+:::
+
+#### `tabBarStyle`
+
+Object containing styles for the tab bar.
+
+Supported properties:
+
+- `backgroundColor`: Background color of the tab bar.
+
+#### `translucent` <Badge text="iOS" type="info" />
+
+Whether the tab bar is translucent.
+
+- Type: `boolean`
+
+#### `activeIndicatorColor` <Badge text="Android" type="info" />
+
+Color of tab indicator.
+
+- Type: `ColorValue`
+
+#### `renderBottomAccessoryView` <Badge text="iOS" type="info" /> <Badge text="experimental" type="danger"/>
+
+Function that returns a React element to render as [bottom accessory](https://developer.apple.com/documentation/uikit/uitabbarcontroller/bottomaccessory).
+
+:::note
+This feature requires iOS 26.0 or later and is only available on iOS. On older versions, this prop is ignored.
+:::
+
+### Route Configuration
+
+Each route in the `routes` array can have the following properties:
+
+- `key`: Unique identifier for the route
+- `title`: Display title for the tab
+- `focusedIcon`: Icon to show when tab is active
+- `unfocusedIcon`: Icon to show when tab is inactive (optional)
+- `iconPreservesOriginalColors`: Preserve focused icon colors while tinting inactive icons (iOS only, optional, defaults to `false`)
+- `iconRenderingMode`: Rendering mode for icons. Use `'original'` to preserve multicolor icons instead of applying the native tab tint.
+- `badge`: Badge text to display on the tab
+- `activeTintColor`: Custom active tint color for this specific tab
+- `lazy`: Whether to lazy load this tab's content
+- `freezeOnBlur`: Whether to freeze the tab's content when it's not visible
+- `role`: A value that defines the purpose of the tab on iOS: `'search'` (iOS 18+) or `'prominent'` (iOS 27+, displayed as a regular tab on earlier versions)
+- `style`: Style object for the component wrapping the screen content
+- `preventsDefault`: Whether to prevent default tab switching behavior when pressed
+
+### Helper Props
+
+#### `getLazy`
+
+Function to determine if a screen should be lazy loaded.
+
+- Default: Uses `route.lazy`
+
+#### `getLabelText`
+
+Function to get the label text for a tab.
+
+- Default: Uses `route.title`
+
+#### `getBadge`
+
+Function to get the badge text for a tab.
+
+- Default: Uses `route.badge`
+
+:::warning
+To display a badge without text (just a dot), you need to pass a string with a space character (`" "`).
+:::
+
+#### `getActiveTintColor`
+
+Function to get the active tint color for a tab.
+
+- Default: Uses `route.activeTintColor`
+
+#### `getIcon`
+
+Function to get the icon for a tab.
+
+- Default: Uses `route.focusedIcon` and `route.unfocusedIcon`
+
+#### `getIconPreservesOriginalColors`
+
+Preserve the focused icon's original colors and apply `tabBarInactiveTintColor` to the inactive icon. When no inactive tint is provided, the inactive icon uses the native template tint.
+
+- Default: Uses `route.iconPreservesOriginalColors`, or `false`
+- Platform: iOS
+
+This option takes precedence over `iconRenderingMode` and keeps labels as native text, including when `experimental_bakedTintColors` is enabled. Use `iconRenderingMode: 'original'` to preserve colors in both states instead.
+
+#### `getIconRenderingMode`
+
+Function to get the rendering mode for an image icon.
+
+- Default: Uses `route.iconRenderingMode`
+- Options: `'automatic' | 'original'`
+
+Use `original` to preserve the original colors of multicolor image icons, such as logos or branded assets, instead of applying the native tab tint.
+
+#### `getHidden`
+
+Function to determine if a tab should be hidden.
+
+- Default: Uses `route.hidden`
+
+#### `getTestID`
+
+Function to get the test ID for a tab item.
+
+- Default: Uses `route.testID`
+
+#### `getRole`
+
+Function to get the role for a tab item.
+
+- Default: Uses `route.role`
+
+#### `getSceneStyle`
+
+Function to get the style for a tab scene.
+
+- Default: Uses `route.style`
+
+#### `getPreventsDefault`
+
+Function to determine if a tab should prevent default switching behavior when pressed.
+
+- Default: Uses `route.preventsDefault`

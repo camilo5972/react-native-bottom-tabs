@@ -3,4 +3,4 @@
 '@bottom-tabs/react-navigation': patch
 ---
 
-Add an iOS option to preserve original tab icon colors instead of applying tab tint colors.
+Add an iOS option to preserve focused tab icon colors while applying the inactive tint color to unfocused icons.

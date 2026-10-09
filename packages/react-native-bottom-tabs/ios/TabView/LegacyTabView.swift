@@ -57,7 +57,8 @@ struct LegacyTabView: AnyTabView {
               icon: icon,
               sfSymbol: tabData.sfSymbol,
               labeled: props.labeled,
-              preservesOriginalIconColors: tabData.iconPreservesOriginalColors,
+              iconRenderingMode: tabData.iconRenderingMode,
+              iconPreservesOriginalColors: tabData.iconPreservesOriginalColors,
               isFocused: isFocused,
               inactiveTintColor: props.inactiveTintColor
             )

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 internal enum MinimizeBehavior: String {
@@ -6,35 +7,45 @@ internal enum MinimizeBehavior: String {
   case onScrollUp
   case onScrollDown
 
-#if compiler(>=6.2)
-  @available(iOS 26.0, macOS 26.0, tvOS 26.0, *)
-  func convert() -> TabBarMinimizeBehavior {
-#if os(macOS) || os(tvOS)
-    return .automatic
-#else
-    switch self {
-    case .automatic:
-      return .automatic
-    case .never:
-      return .never
-    case .onScrollUp:
-      return .onScrollUp
-    case .onScrollDown:
-      return .onScrollDown
+  #if compiler(>=6.2)
+    @available(iOS 26.0, macOS 26.0, tvOS 26.0, *)
+    func convert() -> TabBarMinimizeBehavior {
+      #if os(macOS) || os(tvOS)
+        return .automatic
+      #else
+        switch self {
+        case .automatic:
+          return .automatic
+        case .never:
+          return .never
+        case .onScrollUp:
+          return .onScrollUp
+        case .onScrollDown:
+          return .onScrollDown
+        }
+      #endif
     }
-#endif
-  }
-#endif
+  #endif
 }
 
 public enum TabBarRole: String {
   case search
+  case prominent
 
   @available(iOS 18, macOS 15, visionOS 2, tvOS 18, *)
-  func convert() -> TabRole {
+  func convert() -> TabRole? {
     switch self {
-      case .search:
-        return .search
+    case .search:
+      return .search
+    case .prominent:
+      #if compiler(>=6.4)
+        if #available(iOS 27, macOS 27, visionOS 27, tvOS 27, *) {
+          return .prominent
+        }
+      #endif
+      // `.prominent` role was introduced in iOS 27 SDK; ignore it on older OS versions
+      // instead of crashing or silently mapping to the wrong role.
+      return nil
     }
   }
 }
@@ -48,14 +59,13 @@ struct IdentifiablePlatformView: Identifiable, Equatable {
   }
 }
 
-/**
- Props that component accepts. SwiftUI view gets re-rendered when ObservableObject changes.
- */
+/// Props that component accepts. SwiftUI view gets re-rendered when ObservableObject changes.
 class TabViewProps: ObservableObject {
   @Published var children: [IdentifiablePlatformView] = []
   @Published var items: [TabInfo] = []
   @Published var selectedPage: String?
   @Published var icons: [Int: PlatformImage] = [:]
+  @Published var focusedIcons: [Int: PlatformImage] = [:]
   @Published var iconsRevision: Int = 0
   @Published var sidebarAdaptable: Bool?
   @Published var labeled: Bool = false
@@ -64,6 +74,7 @@ class TabViewProps: ObservableObject {
   @Published var barTintColor: PlatformColor?
   @Published var activeTintColor: PlatformColor?
   @Published var inactiveTintColor: PlatformColor?
+  @Published var experimentalBakedTintColors: Bool = false
   @Published var translucent: Bool = true
   @Published var disablePageAnimations: Bool = false
   @Published var hapticFeedbackEnabled: Bool = false
@@ -72,11 +83,15 @@ class TabViewProps: ObservableObject {
   @Published var fontFamily: String?
   @Published var fontWeight: String?
   @Published var tabBarHidden: Bool = false
+  #if !os(macOS)
+    let itemImages = TabBarItemImageCache()
+  #endif
 
   var selectedActiveTintColor: PlatformColor? {
     if let selectedPage,
-       let tabData = items.findByKey(selectedPage),
-       let activeTintColor = tabData.activeTintColor {
+      let tabData = items.findByKey(selectedPage),
+      let activeTintColor = tabData.activeTintColor
+    {
       return activeTintColor
     }
 
@@ -85,8 +100,18 @@ class TabViewProps: ObservableObject {
 
   var hasCustomTintColors: Bool {
     activeTintColor != nil
-    || inactiveTintColor != nil
-    || items.contains(where: { $0.activeTintColor != nil })
+      || inactiveTintColor != nil
+      || items.contains(where: { $0.activeTintColor != nil })
+  }
+
+  var effectiveInactiveTintColor: PlatformColor? {
+    #if os(iOS)
+      if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+        return nil
+      }
+    #endif
+
+    return inactiveTintColor
   }
 
   var filteredItems: [TabInfo] {

@@ -1,5 +1,41 @@
 # react-native-bottom-tabs
 
+## 1.4.0
+
+### Minor Changes
+
+- [#542](https://github.com/callstack/react-native-bottom-tabs/pull/542) [`758746c`](https://github.com/callstack/react-native-bottom-tabs/commit/758746c8140c4fac3edf2b7cdd2adcf07f1099db) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Add an icon rendering mode option for preserving original colors of tab icons.
+
+- [#543](https://github.com/callstack/react-native-bottom-tabs/pull/543) [`a8d871a`](https://github.com/callstack/react-native-bottom-tabs/commit/a8d871a8fd7e10fc54b02912e5f2dbca452a5d80) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Display focused icon when hovering on iOS Liquid Glass
+
+### Patch Changes
+
+- [#553](https://github.com/callstack/react-native-bottom-tabs/pull/553) [`05acfaf`](https://github.com/callstack/react-native-bottom-tabs/commit/05acfaf90ced17e40e31220b731b9af47143237c) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Expose Android tab button test IDs to UIAutomator-based E2E tools.
+
+- [#546](https://github.com/callstack/react-native-bottom-tabs/pull/546) [`671c97f`](https://github.com/callstack/react-native-bottom-tabs/commit/671c97f5715aa0ca453a39e19428ba0096d82dbf) Thanks [@gabecorso](https://github.com/gabecorso)! - Add `#if compiler(>=6.2)` guards to iOS-26 SwiftUI symbols in BottomAccessoryProvider.swift and NewTabView.swift to fix compilation on Xcode < 26
+
+## 1.3.1
+
+## 1.3.0
+
+### Minor Changes
+
+- [#522](https://github.com/callstack/react-native-bottom-tabs/pull/522) [`412e9ca`](https://github.com/callstack/react-native-bottom-tabs/commit/412e9ca37e029edb6e0b808e1a9a576e7bf7d02e) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Add `experimental_bakedTintColors` prop to opt into the iOS 26 Liquid Glass active and inactive tint color workaround.
+
+### Patch Changes
+
+- [#526](https://github.com/callstack/react-native-bottom-tabs/pull/526) [`942e441`](https://github.com/callstack/react-native-bottom-tabs/commit/942e4419e4667ab7ed58bcf5313d8ec291f7c659) Thanks [@davidecallegaro](https://github.com/davidecallegaro)! - Fix phantom tab switch on iOS when scene re-appears
+
+- [#530](https://github.com/callstack/react-native-bottom-tabs/pull/530) [`6797d32`](https://github.com/callstack/react-native-bottom-tabs/commit/6797d321ad66f45bee3c6e64720ae983166661ef) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Fix screen not rendering after tab change on iOS 27
+
+- [#527](https://github.com/callstack/react-native-bottom-tabs/pull/527) [`2a8a9a0`](https://github.com/callstack/react-native-bottom-tabs/commit/2a8a9a0898f78a45834375652b1d765b96193160) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Disable tabBarInactiveTintColor on iOS >= 26
+
+- [#524](https://github.com/callstack/react-native-bottom-tabs/pull/524) [`5428315`](https://github.com/callstack/react-native-bottom-tabs/commit/54283150c216ccd31566d3f07d48f70f5faac44a) Thanks [@spokodev](https://github.com/spokodev)! - Respect user-supplied `tabBarHidden` on `TabView`.
+
+- [#508](https://github.com/callstack/react-native-bottom-tabs/pull/508) [`1c5b385`](https://github.com/callstack/react-native-bottom-tabs/commit/1c5b38565c464e612c3be715bded1f8950efc5d4) Thanks [@oscnord](https://github.com/oscnord)! - Fix tvOS compilation due to unavailable APIs
+
+- [#519](https://github.com/callstack/react-native-bottom-tabs/pull/519) [`2ebe13b`](https://github.com/callstack/react-native-bottom-tabs/commit/2ebe13bef3a19b3c4168c741275ff00d96604cd7) Thanks [@thiagobrez](https://github.com/thiagobrez)! - Keep iOS tab transitions smooth when switching between tabs with and without active tint colors.
+
 ## 1.2.0
 
 ### Minor Changes

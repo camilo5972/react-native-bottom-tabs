@@ -5,7 +5,9 @@ export type IconSource = string | ImageSourcePropType;
 
 export type AppleIcon = { sfSymbol: SFSymbol };
 
-export type TabRole = 'search';
+export type TabRole = 'search' | 'prominent';
+
+export type IconRenderingMode = 'automatic' | 'original';
 
 export type LayoutDirection = 'ltr' | 'rtl' | 'locale';
 
@@ -18,6 +20,7 @@ export type BaseRoute = {
   lazy?: boolean;
   focusedIcon?: ImageSourcePropType | AppleIcon;
   unfocusedIcon?: ImageSourcePropType | AppleIcon;
+  iconRenderingMode?: IconRenderingMode;
   iconPreservesOriginalColors?: boolean;
   activeTintColor?: string;
   hidden?: boolean;

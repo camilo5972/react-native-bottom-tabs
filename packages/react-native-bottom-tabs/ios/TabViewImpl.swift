@@ -21,7 +21,7 @@ struct TabViewImpl: View {
         onSelect: onSelect
       ) {
         #if !os(macOS)
-        updateTabBarAppearance(props: props, tabBar: tabBar)
+          updateTabBarAppearance(props: props, tabBar: tabBar)
         #endif
       }
     } else {
@@ -31,7 +31,7 @@ struct TabViewImpl: View {
         onSelect: onSelect
       ) {
         #if !os(macOS)
-        updateTabBarAppearance(props: props, tabBar: tabBar)
+          updateTabBarAppearance(props: props, tabBar: tabBar)
         #endif
       }
     }
@@ -46,8 +46,9 @@ struct TabViewImpl: View {
     tabContent
       .tabBarMinimizeBehavior(props.minimizeBehavior)
       #if !os(tvOS) && !os(macOS) && !os(visionOS)
-        .onTabItemEvent { index, isLongPress in
-          let item = props.filteredItems[safe: index]
+        .onTabItemEvent { index, identifier, isLongPress in
+          let item = identifier.flatMap { props.filteredItems.findByKey($0) }
+            ?? index.flatMap { props.filteredItems[safe: $0] }
           guard let key = item?.key else { return false }
 
           if isLongPress {
@@ -61,16 +62,16 @@ struct TabViewImpl: View {
         }
       #endif
       .introspectTabView { tabController in
-#if !os(macOS)
-        tabController.view.backgroundColor = .clear
-        tabController.viewControllers?.forEach { $0.view.backgroundColor = .clear }
-#endif
+        #if !os(macOS)
+          tabController.view.backgroundColor = .clear
+          tabController.viewControllers?.forEach { $0.view.backgroundColor = .clear }
+        #endif
         #if os(macOS)
           tabBar = tabController
         #else
           tabBar = tabController.tabBar
           updateTabBarAppearance(props: props, tabBar: tabController.tabBar)
-          updateTabBarImages(props: props, tabBar: tabController.tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabController.tabBar)
           if !props.tabBarHidden {
             onTabBarMeasured(
               Int(tabController.tabBar.frame.size.height)
@@ -114,10 +115,10 @@ struct TabViewImpl: View {
 }
 
 #if !os(macOS)
-  private func updateTabBarImages(props: TabViewProps, tabBar: UITabBar?) {
-    guard shouldApplyLiquidGlassTintWorkaround(),
-          let tabBar,
-          let items = tabBar.items else { return }
+  private func updateTabBarItemImages(props: TabViewProps, tabBar: UITabBar?) {
+    guard let tabBar,
+      let items = tabBar.items
+    else { return }
 
     configureTabBarItemImages(items: items, props: props)
 
@@ -148,7 +149,7 @@ struct TabViewImpl: View {
     #if !os(visionOS)
       tabBar.isTranslucent = props.translucent
     #endif
-    tabBar.unselectedItemTintColor = props.inactiveTintColor
+    tabBar.unselectedItemTintColor = props.effectiveInactiveTintColor
 
     guard let items = tabBar.items else { return }
 
@@ -168,7 +169,7 @@ struct TabViewImpl: View {
   private func configureStandardAppearance(tabBar: UITabBar, props: TabViewProps) {
     let appearance = UITabBarAppearance()
     tabBar.tintColor = props.selectedActiveTintColor
-    tabBar.unselectedItemTintColor = props.inactiveTintColor
+    tabBar.unselectedItemTintColor = props.effectiveInactiveTintColor
 
     // Configure background
     switch props.scrollEdgeAppearance {
@@ -193,10 +194,10 @@ struct TabViewImpl: View {
       fontSize: props.fontSize,
       fontFamily: props.fontFamily,
       fontWeight: props.fontWeight,
-      inactiveColor: props.inactiveTintColor
+      inactiveColor: props.effectiveInactiveTintColor
     )
 
-    if let inactiveTintColor = props.inactiveTintColor {
+    if let inactiveTintColor = props.effectiveInactiveTintColor {
       itemAppearance.normal.iconColor = inactiveTintColor
     }
     if let activeTintColor = props.selectedActiveTintColor {
@@ -218,68 +219,33 @@ struct TabViewImpl: View {
     }
   }
 
+  /// Configures the parts of the tab bar items that SwiftUI can't express.
+  ///
+  /// The unselected image is owned by SwiftUI through the tab label (see `TabBarItemImages.labelImage`),
+  /// so it's never assigned here. Assigning item images while the tab bar animates (e.g. minimizing or
+  /// switching tabs) breaks its selection styling on iOS 27, so `selectedImage` is only assigned when it
+  /// changes, and SwiftUI updates its images only when a label changes.
   private func configureTabBarItemImages(items: [UITabBarItem], props: TabViewProps) {
     for (tabBarIndex, item) in items.enumerated() {
-      guard let tabData = props.filteredItems[safe: tabBarIndex],
-            let itemIndex = props.items.firstIndex(where: { $0.key == tabData.key }) else { continue }
+      guard let tabData = props.filteredItems[safe: tabBarIndex] else { continue }
 
       let tabActiveColor = tabData.activeTintColor ?? props.activeTintColor
-      let assetIcon = props.icons[itemIndex]
-      let icon = assetIcon ?? makeSFSymbolImage(named: tabData.sfSymbol)
-      let shouldPreserveOriginalIconColors = tabData.iconPreservesOriginalColors
-      let shouldRenderLabelIntoImage = !shouldPreserveOriginalIconColors
-        && props.hasCustomTintColors
-        && props.labeled
-        && tabData.role != .search
-        && icon != nil
+      let images = props.itemImages.images(for: tabData, props: props)
 
       item.accessibilityLabel = tabData.title
 
-      if shouldRenderLabelIntoImage, let icon {
+      if let images {
+        assignSelectedImage(images.selectedImage, to: item)
+      }
+
+      if images?.rendersLabelIntoImage == true {
         item.title = ""
         item.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 100)
-        item.image = makeTabBarItemImage(
-          icon: icon,
-          title: tabData.title,
-          color: props.inactiveTintColor,
-          props: props
-        )
-        item.selectedImage = makeTabBarItemImage(
-          icon: icon,
-          title: tabData.title,
-          color: tabActiveColor,
-          props: props
-        )
         continue
       }
 
       item.title = props.labeled ? tabData.title : nil
       item.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 0)
-
-      if let icon {
-        if shouldPreserveOriginalIconColors {
-          let originalIcon = icon.withRenderingMode(.alwaysOriginal)
-          // Active state always shows the original multicolor artwork.
-          item.selectedImage = originalIcon
-          // Inactive state: on iOS 26 Liquid Glass the system renders the
-          // UITabBarItem image directly (ignoring the SwiftUI Tab label:
-          // closure), so we must bake the inactiveTintColor into item.image
-          // here. On iOS 18 SwiftUI TabView the SwiftUI label: path handles
-          // this via TabItem.swift, but setting item.image here is harmless.
-          item.image = props.inactiveTintColor.map {
-            icon.withRenderingMode(.alwaysTemplate)
-              .withTintColor($0, renderingMode: .alwaysOriginal)
-          } ?? originalIcon
-        } else {
-          let templateIcon = icon.withRenderingMode(.alwaysTemplate)
-          item.image = props.inactiveTintColor.map {
-            templateIcon.withTintColor($0, renderingMode: .alwaysOriginal)
-          } ?? templateIcon
-          item.selectedImage = tabActiveColor.map {
-            templateIcon.withTintColor($0, renderingMode: .alwaysOriginal)
-          } ?? templateIcon
-        }
-      }
 
       item.setTitleTextAttributes(
         TabBarFontSize.createFontAttributes(
@@ -291,6 +257,169 @@ struct TabViewImpl: View {
         for: .selected
       )
     }
+  }
+
+  private func assignSelectedImage(_ image: UIImage, to item: UITabBarItem) {
+    // `UITabBarItem.selectedImage` returns a copy, so compare against the last assigned instance instead.
+    let assignedImage = objc_getAssociatedObject(item, &AssociatedKeys.selectedImage) as? UIImage
+    guard assignedImage !== image else { return }
+
+    item.selectedImage = image
+    objc_setAssociatedObject(item, &AssociatedKeys.selectedImage, image, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+  }
+
+  private enum AssociatedKeys {
+    static var selectedImage: UInt8 = 0
+  }
+
+  struct TabBarItemImages {
+    /// Replaces the icon of the tab's SwiftUI label, or `nil` to keep the tab's own icon.
+    let labelImage: UIImage?
+    let selectedImage: UIImage
+    let rendersLabelIntoImage: Bool
+  }
+
+  final class TabBarItemImageCache {
+    private var entries: [String: (inputs: Inputs, images: TabBarItemImages?)] = [:]
+
+    func images(for tabData: TabInfo, props: TabViewProps) -> TabBarItemImages? {
+      guard let itemIndex = props.items.firstIndex(where: { $0.key == tabData.key }) else { return nil }
+
+      let assetIcon = props.icons[itemIndex]
+      let focusedAssetIcon = props.focusedIcons[itemIndex]
+      let useBakedTintColors = shouldUseExperimentalBakedTintColors(props: props)
+      let hasEffectiveRole: Bool
+      if #available(iOS 18, macOS 15, visionOS 2, tvOS 18, *) {
+        hasEffectiveRole = tabData.role?.convert() != nil
+      } else {
+        hasEffectiveRole = false
+      }
+      let inputs = Inputs(
+        icon: assetIcon.map(IconSource.image) ?? .sfSymbol(tabData.sfSymbol),
+        focusedIcon: focusedAssetIcon.map(IconSource.image) ?? tabData.focusedSfSymbol.map(IconSource.sfSymbol),
+        title: tabData.title,
+        inactiveTintColor: props.inactiveTintColor,
+        activeTintColor: tabData.activeTintColor ?? props.activeTintColor,
+        preservesOriginalIconColors: tabData.iconRenderingMode == "original",
+        preservesFocusedIconColors: tabData.iconPreservesOriginalColors,
+        useBakedTintColors: useBakedTintColors,
+        rendersLabelIntoImage: useBakedTintColors && props.hasCustomTintColors && props.labeled
+          && !hasEffectiveRole && !tabData.iconPreservesOriginalColors,
+        fontSize: props.fontSize,
+        fontFamily: props.fontFamily,
+        fontWeight: props.fontWeight
+      )
+
+      if let entry = entries[tabData.key], entry.inputs == inputs {
+        return entry.images
+      }
+
+      let images = render(
+        icon: assetIcon ?? makeSFSymbolImage(named: tabData.sfSymbol),
+        focusedIcon: focusedAssetIcon ?? makeSFSymbolImage(named: tabData.focusedSfSymbol),
+        inputs: inputs,
+        props: props
+      )
+      entries[tabData.key] = (inputs, images)
+      return images
+    }
+
+    private func render(
+      icon: UIImage?,
+      focusedIcon: UIImage?,
+      inputs: Inputs,
+      props: TabViewProps
+    ) -> TabBarItemImages? {
+      guard let icon else { return nil }
+      let selectedIcon = focusedIcon ?? icon
+
+      if inputs.rendersLabelIntoImage {
+        return TabBarItemImages(
+          labelImage: makeTabBarItemImage(
+            icon: icon,
+            title: inputs.title,
+            color: inputs.inactiveTintColor,
+            preservesOriginalIconColors: inputs.preservesOriginalIconColors,
+            props: props
+          ),
+          selectedImage: makeTabBarItemImage(
+            icon: selectedIcon,
+            title: inputs.title,
+            color: inputs.activeTintColor,
+            preservesOriginalIconColors: inputs.preservesOriginalIconColors,
+            props: props
+          ),
+          rendersLabelIntoImage: true
+        )
+      }
+
+      return TabBarItemImages(
+        // The boolean option preserves selected artwork and tints the inactive label image.
+        labelImage: inputs.useBakedTintColors || inputs.preservesFocusedIconColors
+          ? renderTabBarIcon(
+            inputs.preservesFocusedIconColors ? icon.withRenderingMode(.alwaysTemplate) : icon,
+            color: inputs.inactiveTintColor,
+            preservesOriginalIconColors: !inputs.preservesFocusedIconColors && inputs.preservesOriginalIconColors,
+            forceTintColor: true
+          )
+          : nil,
+        selectedImage: renderTabBarIcon(
+          selectedIcon,
+          color: inputs.activeTintColor,
+          preservesOriginalIconColors: inputs.preservesFocusedIconColors || inputs.preservesOriginalIconColors,
+          forceTintColor: inputs.useBakedTintColors
+        ),
+        rendersLabelIntoImage: false
+      )
+    }
+
+    private enum IconSource: Equatable {
+      case image(UIImage)
+      case sfSymbol(String)
+
+      static func == (lhs: IconSource, rhs: IconSource) -> Bool {
+        switch (lhs, rhs) {
+        case let (.image(lhs), .image(rhs)):
+          return lhs === rhs
+        case let (.sfSymbol(lhs), .sfSymbol(rhs)):
+          return lhs == rhs
+        default:
+          return false
+        }
+      }
+    }
+
+    private struct Inputs: Equatable {
+      let icon: IconSource
+      let focusedIcon: IconSource?
+      let title: String
+      let inactiveTintColor: UIColor?
+      let activeTintColor: UIColor?
+      let preservesOriginalIconColors: Bool
+      let preservesFocusedIconColors: Bool
+      let useBakedTintColors: Bool
+      let rendersLabelIntoImage: Bool
+      let fontSize: Int?
+      let fontFamily: String?
+      let fontWeight: String?
+    }
+  }
+
+  private func renderTabBarIcon(
+    _ icon: UIImage,
+    color: UIColor?,
+    preservesOriginalIconColors: Bool,
+    forceTintColor: Bool
+  ) -> UIImage {
+    if preservesOriginalIconColors {
+      return icon.withRenderingMode(.alwaysOriginal)
+    }
+
+    guard forceTintColor, let color else {
+      return icon
+    }
+
+    return icon.withTintColor(color, renderingMode: .alwaysOriginal)
   }
 
   private func makeSFSymbolImage(named sfSymbol: String?) -> UIImage? {
@@ -308,7 +437,11 @@ struct TabViewImpl: View {
     )
   }
 
-  private func shouldApplyLiquidGlassTintWorkaround() -> Bool {
+  private func shouldUseExperimentalBakedTintColors(props: TabViewProps) -> Bool {
+    guard props.experimentalBakedTintColors else {
+      return false
+    }
+
     #if os(iOS)
       if #available(iOS 26.0, *) {
         return true
@@ -322,15 +455,17 @@ struct TabViewImpl: View {
     icon: UIImage,
     title: String,
     color: UIColor?,
+    preservesOriginalIconColors: Bool = false,
     props: TabViewProps
   ) -> UIImage {
     let color = color ?? .label
     let iconSize = CGSize(width: 27, height: 27)
-    let font = TabBarFontSize.createFontAttributes(
-      size: props.fontSize.map(CGFloat.init) ?? TabBarFontSize.defaultSize,
-      family: props.fontFamily,
-      weight: props.fontWeight
-    )[.font] as? UIFont ?? UIFont.boldSystemFont(ofSize: TabBarFontSize.defaultSize)
+    let font =
+      TabBarFontSize.createFontAttributes(
+        size: props.fontSize.map(CGFloat.init) ?? TabBarFontSize.defaultSize,
+        family: props.fontFamily,
+        weight: props.fontWeight
+      )[.font] as? UIFont ?? UIFont.boldSystemFont(ofSize: TabBarFontSize.defaultSize)
     let paragraphStyle = NSMutableParagraphStyle()
     paragraphStyle.alignment = .center
     let attributes: [NSAttributedString.Key: Any] = [
@@ -347,7 +482,12 @@ struct TabViewImpl: View {
     format.scale = UIScreen.main.scale
 
     let image = UIGraphicsImageRenderer(size: imageSize, format: format).image { _ in
-      let tintedIcon = icon.withTintColor(color, renderingMode: .alwaysOriginal)
+      let tintedIcon: UIImage
+      if preservesOriginalIconColors {
+        tintedIcon = icon.withRenderingMode(.alwaysOriginal)
+      } else {
+        tintedIcon = icon.withTintColor(color, renderingMode: .alwaysOriginal)
+      }
       let iconFrame = aspectFitRect(
         size: tintedIcon.size,
         in: CGRect(
@@ -441,32 +581,36 @@ extension View {
         }
         .onChange(of: props.inactiveTintColor) { _ in
           updateTabBarAppearance(props: props, tabBar: tabBar)
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.activeTintColor) { _ in
           updateTabBarAppearance(props: props, tabBar: tabBar)
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.selectedActiveTintColor) { newValue in
           tabBar?.tintColor = newValue
         }
         .onChange(of: props.iconsRevision) { _ in
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.labeled) { _ in
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.fontSize) { _ in
           updateTabBarAppearance(props: props, tabBar: tabBar)
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.fontFamily) { _ in
           updateTabBarAppearance(props: props, tabBar: tabBar)
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.fontWeight) { _ in
           updateTabBarAppearance(props: props, tabBar: tabBar)
-          updateTabBarImages(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
+        }
+        .onChange(of: props.experimentalBakedTintColors) { _ in
+          updateTabBarAppearance(props: props, tabBar: tabBar)
+          updateTabBarItemImages(props: props, tabBar: tabBar)
         }
         .onChange(of: props.tabBarHidden) { newValue in
           tabBar?.isHidden = newValue
@@ -488,7 +632,7 @@ extension View {
   @ViewBuilder
   func tabBarMinimizeBehavior(_ behavior: MinimizeBehavior?) -> some View {
     #if compiler(>=6.2)
-    if #available(iOS 26.0, macOS 26.0, tvOS 26.0, *) {
+      if #available(iOS 26.0, macOS 26.0, tvOS 26.0, *) {
         if let behavior {
           self.tabBarMinimizeBehavior(behavior.convert())
         } else {
